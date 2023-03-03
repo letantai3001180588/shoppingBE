@@ -8,7 +8,6 @@ const path = require('path')
 const methodOverride=require('method-override')
 const jwt=require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
-var cors = require('cors')
 
 const app = express()
 const port = 3000
