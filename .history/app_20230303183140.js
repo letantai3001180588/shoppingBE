@@ -19,7 +19,6 @@ app.use(express.urlencoded({
 app.use(express.json())
 app.use(methodOverride('_method'))
 app.use(cookieParser())
-app.use(bodyParser.json());
 
 const Schema = mongoose.Schema;
 const acountSchema = new Schema({

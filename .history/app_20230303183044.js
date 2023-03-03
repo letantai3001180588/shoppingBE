@@ -4,6 +4,7 @@ const express = require('express')
 const db=require('./config/db/index')
 // const path = require('path');
 const { default: mongoose } = require('mongoose');
+const { mongooseToObject } = require('../ExpressJs/src/mongoose');
 const path = require('path')
 const methodOverride=require('method-override')
 const jwt=require('jsonwebtoken');
@@ -19,7 +20,6 @@ app.use(express.urlencoded({
 app.use(express.json())
 app.use(methodOverride('_method'))
 app.use(cookieParser())
-app.use(bodyParser.json());
 
 const Schema = mongoose.Schema;
 const acountSchema = new Schema({
