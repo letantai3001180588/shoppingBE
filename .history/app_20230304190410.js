@@ -117,7 +117,7 @@ app.post('/register', (req, res) => {
 })
 
 app.get('/admin', async(req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   
   if(!accessToken){
     res.send('Ban can phai dang nhap')
@@ -146,7 +146,7 @@ app.get('/admin', async(req, res) => {
 
 
 app.use('/acount/delete/:id', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -171,7 +171,7 @@ app.use('/acount/delete/:id', (req, res) => {
 })
 
 app.put('/acount/update/:id', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -203,7 +203,7 @@ app.get('/product',(req,res)=>{
 })
 
 app.post('/product/create', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -226,7 +226,7 @@ app.post('/product/create', (req, res) => {
 })
 
 app.use('/product/delete/:id', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -251,7 +251,7 @@ app.use('/product/delete/:id', (req, res) => {
 })
 
 app.put('/product/update/:id', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -276,7 +276,7 @@ app.put('/product/update/:id', (req, res) => {
 })
 
 app.use('/bill/create',(req,res)=>{
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -296,7 +296,7 @@ app.use('/bill/create',(req,res)=>{
 })
 
 app.use('/bill/delete/:id',(req,res)=>{
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
@@ -320,7 +320,7 @@ app.use('/bill/delete/:id',(req,res)=>{
 })
 
 app.get('/detailBill/create', (req, res) => {
-  const accessToken=req.header('Authorization')
+  const accessToken=req.cookies.token
   if(!accessToken){
     res.send('Ban can phai dang nhap')
   }
