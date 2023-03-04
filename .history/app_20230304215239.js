@@ -23,7 +23,7 @@ app.use(cookieParser())
 app.use(bodyParser.json());
 
 const corsOptions ={
-    origin:true, 
+    origin:'https://shopping-2fep.onrender.com/', 
     credentials:true,            //access-control-allow-credentials:true
     optionSuccessStatus:200
 }
