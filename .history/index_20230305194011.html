@@ -11,15 +11,19 @@
 
     <div class="container mt-3">
     <h2>Stacked form</h2>
-    <form method="post" action="/bill/create">
+    <form method="post" action="/detailBill/create">
         <div class="mb-3 mt-3">
-            <label for="email">quantity:</label>
-            <input type="numer" class="form-control" id="email" placeholder="Enter email" name="total">
+            <label for="email">Product:</label>
+            <input type="text" class="form-control" id="email" placeholder="Enter email" name="id_product">
         </div>
         <div class="mb-3">
             <label for="pwd">Bill:</label>
-            <input type="text" class="form-control" id="pwd" placeholder="Enter password" name="id_user">
+            <input type="text" class="form-control" id="pwd" placeholder="Enter password" name="id_bill">
         </div>
+        <!-- <div class="mb-3">
+            <label for="pwd">quantity:</label>
+            <input type="text" class="form-control" id="pwd" placeholder="Enter password" name="quantity">
+        </div> -->
         <div class="form-check mb-3">
         <label class="form-check-label">
             <input class="form-check-input" type="checkbox" name="remember"> Remember me

@@ -81,7 +81,7 @@ app.post('/login',(req,res)=>{
   acount.findOne({user:user,password:password})
   .then(data=>{
     const accessToken=jwt.sign({_id:data._id},'mk')
-    res.send({mesage:'Access',accessToken:accessToken,role:data.role})
+    res.send({mesage:'Access',accessToken:accessToken})
   })
   .catch(()=>{
     res.send('Failure')
@@ -126,13 +126,12 @@ app.get('/admin', async(req, res) => {
     const listProduct=await product.find({})
     const listBill=await bill.find({}).populate('id_user')
     const listDetailBill=await detailBill.find({}).populate('id_product')
-    const listAcount=await acount.find({})
     let verify=jwt.verify(accessToken,'mk')
     acount.find({_id:verify._id})
     .then((acount)=>{
       const role=String(acount[0].role)
       if(role==='admin'){
-        res.json({acount:acount,acountDB:listAcount,product:listProduct,bill:listBill,detailBill:listDetailBill})
+        res.json({acount:acount,product:listProduct,bill:listBill,detailBill:listDetailBill})
       }
       else{
         res.send('Failture')
@@ -213,7 +212,7 @@ app.post('/product/create', (req, res) => {
     acount.find({_id:verify._id}).then((data)=>{
       const role=String(data[0].role)
       if(role==='admin'){
-        const a=mongoose.model('product',productSchema)
+        const a=mongoose.model('product',acountSchema)
         const product=new a(req.body)
         product.save()
       }
@@ -276,7 +275,7 @@ app.put('/product/update/:id', (req, res) => {
   }
 })
 
-app.post('/bill/create',(req,res)=>{
+app.use('/bill/create',(req,res)=>{
   const accessToken=req.header('Authorization')
   if(!accessToken){
     res.send('Ban can phai dang nhap')
@@ -284,11 +283,10 @@ app.post('/bill/create',(req,res)=>{
   else{
     let verify=jwt.verify(accessToken,'mk')
     acount.find({_id:verify._id}).then((data)=>{
-      const bill=mongoose.model('bill',billSchema)
       const newBill= new bill(req.body)
       newBill.save()
-      .then((item) => {
-        res.send(item)
+      .then(() => {
+        res.send('Access')
       })
       .catch()
     }).catch(()=>{
@@ -322,21 +320,36 @@ app.use('/bill/delete/:id',(req,res)=>{
 })
 
 app.post('/detailBill/create', (req, res) => {
-  const accessToken=req.header('Authorization')
-  if(!accessToken){
-    res.send('Ban can phai dang nhap')
-  }
-  else{
-    let verify=jwt.verify(accessToken,'mk')
-    acount.find({_id:verify._id}).then((data)=>{
-      detailBill.insertMany(req.body)
-      .then(()=>res.send('Access'))
-      .catch((err)=>res.send(err))
-    }).catch(()=>{
-      res.send('Tai khoan hoac mat khau khong dung')
-    })
-  }
-
+  
+  // const accessToken=req.header('Authorization')
+  // if(!accessToken){
+  //   res.send('Ban can phai dang nhap')
+  // }
+  // else{
+  //   let verify=jwt.verify(accessToken,'mk')
+  //   acount.find({_id:verify._id}).then((data)=>{
+        // const newBill= new detailBill(req.body)
+        let item=a.map(item=>{
+          return {
+            id_product:item.id_product,
+            id_bill:item.id_bill,
+            quantity:item.quantity
+          }
+        })
+        const detailBill=mongoose.model('detailBill',detailBillSchema)
+        const a=new detailBill(req.body)
+        detailBill.save(
+          // req.body
+        )
+        .then(() => {
+          res.send('Access')
+        })
+        .catch((err)=>console.log('s'))
+      
+  //   }).catch(()=>{
+  //     res.send('Tai khoan hoac mat khau khong dung')
+  //   })
+  // }
 })
 
 app.listen(port, () => {
