@@ -10,36 +10,40 @@ const jwt=require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const nodemailer =  require('nodemailer');
-
-
+const multer = require('multer');
+const fs = require("fs");
 
 const app = express()
 const port = 3000
 db.connectDB();
 
 app.use(express.urlencoded({
-  extended:false
-}))
-app.use(express.json())
+  extended:false,
+  limit:'50mb'
+}
+))
+app.use(express.json({limit: '50mb'}));
+
 app.use(methodOverride('_method'))
 app.use(cookieParser())
 app.use(bodyParser.json());
 
 const corsOptions ={
-    origin:true, 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
+  origin:true, 
+  credentials:true,            //access-control-allow-credentials:true
+  optionSuccessStatus:200
 }
 app.use(cors(corsOptions));
 
 const Schema = mongoose.Schema;
 const acountSchema = new Schema({
-    user: { type: String},
+    username: { type: String},
     password: { type: String},
     email: { type: String},
     address: { type: String},
     role:{type:String},
     phone: { type: String},
+    avatar: { type: String},
   },{
     collection:'acount'
   });
@@ -49,7 +53,7 @@ const productSchema = new Schema({
   name:{type:String},
   price:{type:Number},
   img:{type:String},
-
+  trademark: { type: String},
   },{
     collection:'product'
   });
@@ -77,6 +81,7 @@ const detailBill=mongoose.model('detailBill',detailBillSchema)
 
 const http = require("http");
 const { type } = require('os');
+const { brotliCompress } = require('zlib');
 const server = http.createServer(app);
 
 const socketIo = require("socket.io")(server, {
@@ -86,24 +91,24 @@ const socketIo = require("socket.io")(server, {
 });
 
 
-socketIo.on("connection", (socket) => {
-console.log("New client connected" + socket.id);
+// socketIo.on("connection", (socket) => {
+// console.log("New client connected" + socket.id);
 
-  socket.emit("getId", socket.id);
+//   socket.emit("getId", socket.id);
 
-  socket.on("sendDataClient", function(data) {
-    console.log(data)
-    socketIo.emit("sendDataServer", { data });
-  })
+//   socket.on("sendDataClient", function(data) {
+//     console.log(data)
+//     socketIo.emit("sendDataServer", { data });
+//   })
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
-  });
+//   socket.on("disconnect", () => {
+//     console.log("Client disconnected");
+//   });
   
-});
-server.listen(4000, () => {
-  console.log('Server đang chay tren cong 4000');
-});
+// });
+// server.listen(4000, () => {
+//   console.log('Server đang chay tren cong 4000');
+// });
 
 
 app.get('/', (req, res) => {
@@ -113,7 +118,7 @@ app.get('/', (req, res) => {
 app.post('/login',(req,res)=>{
   const user=req.body.user
   const password=req.body.password
-  acount.findOne({user:user,password:password})
+  acount.findOne({email:user,password:password})
   .then(data=>{
     const accessToken=jwt.sign({_id:data._id},'mk')
     res.send({mesage:'Access',accessToken:accessToken,role:data.role})
@@ -204,33 +209,33 @@ app.put('/bill/transport/:id', (req, res) => {
   }
 })
 
+app.put('/acount/receive/:id', (req, res) => {
+  bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
+  .then(() => {
+    res.send('Access') 
+  })
+})
 
-app.put('/acount/transport/:id', (req, res) => {
-  const accessToken=req.header('Authorization')
-  if(!accessToken){
-    res.send('Ban can phai dang nhap')
+app.get('/filterProduct/:trademark/:design/:price',(req,res)=>{
+  let a=''
+  if(req.params.price==1||req.params.price==-1)
+    a=req.params.price
+
+  let b={
+    $and:[
+      {name: new RegExp(req.params.design,'i'),
+      trademark:new RegExp(req.params.trademark,'i')}
+    ]
   }
-  else{
-    let verify=jwt.verify(accessToken,'mk')
-    acount.find({_id:verify._id})
-    .then((userAcount)=>{
-      bill.find({id_user:verify._id})
-      .then((userBill)=>{
-        if(userAcount===userBill){
-          bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
-          .then(() => {
-            res.send('Access')
-          })
-          .catch()
-            res.send('Failture')
-        }
-    })
-
-
-    }).catch(()=>{
-      res.send('Tai khoan hoac mat khau khong dung')
-    })
-  }
+  if(req.params.design===' '&&req.params.trademark===' ')
+    b={}
+  
+  product.find(b)
+  .sort({price:a})
+  .limit(12)
+  .then((product)=>{
+    res.send(product)
+  })
 })
 
 app.use('/acount/delete/:id', (req, res) => {
@@ -267,7 +272,7 @@ app.put('/acount/update/:id', (req, res) => {
     let verify=jwt.verify(accessToken,'mk')
     acount.find({_id:verify._id}).then((data)=>{
       const role=String(data[0].role)
-      if(role==='admin'){
+      if(role){
         acount.updateOne({_id:req.params.id},req.body)
         .then(() => {
           res.send('Access')
@@ -297,6 +302,7 @@ app.get('/product/:page', (req, res) => {
 
 
 });
+
 app.get('/sumPage', async (req,res)=>{
   const estimate = await product.estimatedDocumentCount();
   res.send(String(estimate/12))
@@ -385,22 +391,15 @@ app.put('/product/update/:id', (req, res) => {
   }
 })
 
-app.get('/bill/waitOrder/:id_user', (req, res) => {
-  bill.find({id_user:req.params.id_user,statusOrder:0})
-  .then((data)=>{
-    res.send(data)
+app.get('/bill/:id_user', async(req, res) => {
+  bill.find({id_user:req.params.id_user})
+  .then(async(data)=>{
+    res.json(data)
   })
 })
 
-app.get('/bill/transportOrder/:id_user', (req, res) => {
-  bill.find({id_user:req.params.id_user,statusOrder:1})
-  .then((data)=>{
-    res.send(data)
-  })
-})
-
-app.get('/bill/finishOrder/:id_user', (req, res) => {
-  bill.find({id_user:req.params.id_user,statusOrder:2})
+app.get('/detailBill',async(req,res)=>{
+  detailBill.find({}).populate('id_product')
   .then((data)=>{
     res.send(data)
   })
@@ -413,8 +412,9 @@ app.post('/bill/create',(req,res)=>{
     port: 465,
     secure: true,
     auth: {
-        user: 'taile07032000@gmail.com', 
-        pass: 'ywyzwofihevekaes' 
+        user: process.env.EMAIL, 
+        pass: process.env.APP_PASSWORD,
+
     }
   });
   let style=`
@@ -486,10 +486,9 @@ app.post('/bill/create',(req,res)=>{
       })
       .then(()=>{
         transporter.sendMail(mainOptions, function(err, info){
-          err?res.send(err):console.log(info)
+          err?console.log(err):console.log(info)
         });
       })
-      .catch()
     }).catch(()=>{
       res.send('Tai khoan hoac mat khau khong dung')
     })
@@ -536,6 +535,62 @@ app.post('/detailBill/create', (req, res) => {
       res.send('Tai khoan hoac mat khau khong dung')
     })
   }
+
+})
+
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './public');
+	},
+	filename: function (req, file, cb) {
+		console.log(file);
+		cb(null,  file.originalname);
+	},
+});
+const upload = multer({ storage: storage }).single('myfile');
+
+app.post('/upload',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			res.send(err);
+		} else {
+      res.send('Success, Image uploaded!');
+		}
+    console.log(req.file.filename);
+	});
+})
+
+app.get('/img/:address',(req,res)=>{
+  res.sendFile(path.join(__dirname+'/public/'+req.params.address));
+
+})
+
+app.use('/delete/img/:address',(req,res)=>{
+  const filename=req.params.address;
+  const directory='/shoppingbe/public/';
+  fs.unlink(directory+filename,(err)=>{
+      if (err) {
+      res.status(500).send({
+        message: "Could not delete the file. " + err,
+      });
+    }
+
+    res.status(200).send({
+      message: "File is deleted.",
+    });
+  })
+})
+
+app.post('/img/update',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('thanh cong');
+      // console.log(req.file.filename);
+      res.send('Success, Image uploaded!');
+		}
+	})
 
 })
 
