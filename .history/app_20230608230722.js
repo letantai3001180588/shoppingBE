@@ -29,19 +29,11 @@ app.use(express.urlencoded({
   limit:'50mb'
 }
 ))
+app.use(express.json({limit: '50mb'}));
+app.use(compression())
 // app.use(methodOverride('_method'))
 // app.use(cookieParser())
-
-app.use(express.json({limit: '50mb'}));
 app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
-
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
 
 const corsOptions ={
   origin:true, 
@@ -577,4 +569,5 @@ app.get('/index.html', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+  console.log(process.env)
 })

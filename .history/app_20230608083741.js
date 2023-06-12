@@ -1,5 +1,3 @@
-// const methodOverride=require('method-override')
-// const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const express = require('express')
@@ -7,7 +5,9 @@ const db=require('./config/db/index')
 // const path = require('path');
 const { default: mongoose } = require('mongoose');
 const path = require('path')
+const methodOverride=require('method-override')
 const jwt=require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const nodemailer =  require('nodemailer');
 const multer = require('multer');
@@ -18,8 +18,6 @@ const productRoute=require('./routes/productRoute')
 const billRoute=require('./routes/billRoute')
 const detailBillRoute=require('./routes/detailBillRoute')
 
-const compression = require('compression');
-
 const app = express()
 const port = 3000
 db.connectDB();
@@ -29,19 +27,11 @@ app.use(express.urlencoded({
   limit:'50mb'
 }
 ))
-// app.use(methodOverride('_method'))
-// app.use(cookieParser())
-
 app.use(express.json({limit: '50mb'}));
-app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
 
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
+app.use(methodOverride('_method'))
+app.use(cookieParser())
+app.use(bodyParser.json());
 
 const corsOptions ={
   origin:true, 
@@ -164,37 +154,37 @@ app.get('/index.html', (req, res) => {
 //   }
 // })
 
-// app.put('/bill/transport/:id', (req, res) => {
-//   const accessToken=req.header('Authorization')
-//   if(!accessToken){
-//     res.send('Ban can phai dang nhap')
-//   }
-//   else{
-//     let verify=jwt.verify(accessToken,'mk')
-//     acount.find({_id:verify._id}).then((data)=>{
-//       const role=String(data[0].role)
-//       if(role==='admin'){
-//         bill.updateOne({_id:req.params.id},{$set:{statusOrder:1}})
-//         .then(() => {
-//           res.send('Access')
-//         })
-//         .catch()
-//       }
-//       else{
-//         res.send('Failture')
-//       }
-//     }).catch(()=>{
-//       res.send('Tai khoan hoac mat khau khong dung')
-//     })
-//   }
-// })
+app.put('/bill/transport/:id', (req, res) => {
+  const accessToken=req.header('Authorization')
+  if(!accessToken){
+    res.send('Ban can phai dang nhap')
+  }
+  else{
+    let verify=jwt.verify(accessToken,'mk')
+    acount.find({_id:verify._id}).then((data)=>{
+      const role=String(data[0].role)
+      if(role==='admin'){
+        bill.updateOne({_id:req.params.id},{$set:{statusOrder:1}})
+        .then(() => {
+          res.send('Access')
+        })
+        .catch()
+      }
+      else{
+        res.send('Failture')
+      }
+    }).catch(()=>{
+      res.send('Tai khoan hoac mat khau khong dung')
+    })
+  }
+})
 
-// app.put('/bill/receive/:id', (req, res) => {
-//   bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
-//   .then(() => {
-//     res.send('Access') 
-//   })
-// })
+app.put('/bill/receive/:id', (req, res) => {
+  bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
+  .then(() => {
+    res.send('Access') 
+  })
+})
 
 // app.get('/filterProduct/:trademark/:design/:price',(req,res)=>{
 //   let a=''

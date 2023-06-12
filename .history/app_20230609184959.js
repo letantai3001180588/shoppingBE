@@ -33,15 +33,18 @@ app.use(express.urlencoded({
 // app.use(cookieParser())
 
 app.use(express.json({limit: '50mb'}));
-app.use(bodyParser.json());
 app.use(compression({ filter: shouldCompress }))
-
+ 
 function shouldCompress (req, res) {
   if (req.headers['x-no-compression']) {
+    // don't compress responses with this request header
     return false
   }
+ 
+  // fallback to standard filter function
   return compression.filter(req, res)
 }
+app.use(bodyParser.json());
 
 const corsOptions ={
   origin:true, 

@@ -1,5 +1,3 @@
-// const methodOverride=require('method-override')
-// const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const express = require('express')
@@ -7,7 +5,9 @@ const db=require('./config/db/index')
 // const path = require('path');
 const { default: mongoose } = require('mongoose');
 const path = require('path')
+const methodOverride=require('method-override')
 const jwt=require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const nodemailer =  require('nodemailer');
 const multer = require('multer');
@@ -18,8 +18,6 @@ const productRoute=require('./routes/productRoute')
 const billRoute=require('./routes/billRoute')
 const detailBillRoute=require('./routes/detailBillRoute')
 
-const compression = require('compression');
-
 const app = express()
 const port = 3000
 db.connectDB();
@@ -29,19 +27,11 @@ app.use(express.urlencoded({
   limit:'50mb'
 }
 ))
-// app.use(methodOverride('_method'))
-// app.use(cookieParser())
-
 app.use(express.json({limit: '50mb'}));
-app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
 
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
+app.use(methodOverride('_method'))
+app.use(cookieParser())
+app.use(bodyParser.json());
 
 const corsOptions ={
   origin:true, 

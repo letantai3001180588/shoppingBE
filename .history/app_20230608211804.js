@@ -29,19 +29,11 @@ app.use(express.urlencoded({
   limit:'50mb'
 }
 ))
-// app.use(methodOverride('_method'))
-// app.use(cookieParser())
-
 app.use(express.json({limit: '50mb'}));
+app.use(compression())
+app.use(methodOverride('_method'))
+app.use(cookieParser())
 app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
-
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
 
 const corsOptions ={
   origin:true, 
@@ -62,10 +54,10 @@ const socketIo = require("socket.io")(server, {
   }
 });
 
-app.use('/',userRoute);
+// app.use('/',userRoute);
 app.use('/',productRoute);
-app.use('/',billRoute);
-app.use('/',detailBillRoute)
+// app.use('/',billRoute);
+// app.use('/',detailBillRoute)
 
 // socketIo.on("connection", (socket) => {
 // console.log("New client connected" + socket.id);

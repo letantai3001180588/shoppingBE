@@ -1,47 +1,39 @@
-// const methodOverride=require('method-override')
-// const cookieParser = require('cookie-parser');
+import methodOverride from 'method-override';
+import cookieParser from 'cookie-parser';
 require('dotenv').config();
-const bodyParser = require('body-parser');
-const express = require('express')
-const db=require('./config/db/index')
+import { json } from 'body-parser';
+import express, { urlencoded, json as _json } from 'express';
+import { connectDB } from './config/db/index';
 // const path = require('path');
-const { default: mongoose } = require('mongoose');
-const path = require('path')
-const jwt=require('jsonwebtoken');
-const cors = require('cors')
-const nodemailer =  require('nodemailer');
-const multer = require('multer');
-const fs = require("fs");
+import { default as mongoose } from 'mongoose';
+import { join } from 'path';
+import jwt from 'jsonwebtoken';
+import cors from 'cors';
+import nodemailer from 'nodemailer';
+import multer from 'multer';
+import fs from "fs";
 
-const userRoute=require('./routes/userRoute')
-const productRoute=require('./routes/productRoute')
-const billRoute=require('./routes/billRoute')
-const detailBillRoute=require('./routes/detailBillRoute')
+import userRoute from './routes/userRoute';
+import productRoute from './routes/productRoute';
+import billRoute from './routes/billRoute';
+import detailBillRoute from './routes/detailBillRoute';
 
-const compression = require('compression');
+import compression from 'compression';
 
 const app = express()
 const port = 3000
-db.connectDB();
+connectDB();
 
-app.use(express.urlencoded({
+app.use(urlencoded({
   extended:false,
   limit:'50mb'
 }
 ))
-// app.use(methodOverride('_method'))
-// app.use(cookieParser())
-
-app.use(express.json({limit: '50mb'}));
-app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
-
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
+app.use(_json({limit: '50mb'}));
+app.use(compression())
+app.use(methodOverride('_method'))
+app.use(cookieParser())
+app.use(json());
 
 const corsOptions ={
   origin:true, 
@@ -51,10 +43,10 @@ const corsOptions ={
 app.use(cors(corsOptions));
 
 
-const http = require("http");
-const { type } = require('os');
-const { brotliCompress } = require('zlib');
-const server = http.createServer(app);
+import { createServer } from "http";
+import { type } from 'os';
+import { brotliCompress } from 'zlib';
+const server = createServer(app);
 
 const socketIo = require("socket.io")(server, {
   cors: {
@@ -92,7 +84,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/index.html', (req, res) => {
-  res.sendFile(path.join(__dirname+'/index.html'));
+  res.sendFile(join(__dirname+'/index.html'));
 })
 
 // app.post('/login',(req,res)=>{
@@ -577,4 +569,5 @@ app.get('/index.html', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+  console.log(process.env)
 })

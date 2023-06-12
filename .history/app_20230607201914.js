@@ -1,5 +1,3 @@
-// const methodOverride=require('method-override')
-// const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const express = require('express')
@@ -7,7 +5,9 @@ const db=require('./config/db/index')
 // const path = require('path');
 const { default: mongoose } = require('mongoose');
 const path = require('path')
+const methodOverride=require('method-override')
 const jwt=require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const nodemailer =  require('nodemailer');
 const multer = require('multer');
@@ -15,10 +15,6 @@ const fs = require("fs");
 
 const userRoute=require('./routes/userRoute')
 const productRoute=require('./routes/productRoute')
-const billRoute=require('./routes/billRoute')
-const detailBillRoute=require('./routes/detailBillRoute')
-
-const compression = require('compression');
 
 const app = express()
 const port = 3000
@@ -29,19 +25,11 @@ app.use(express.urlencoded({
   limit:'50mb'
 }
 ))
-// app.use(methodOverride('_method'))
-// app.use(cookieParser())
-
 app.use(express.json({limit: '50mb'}));
-app.use(bodyParser.json());
-app.use(compression({ filter: shouldCompress }))
 
-function shouldCompress (req, res) {
-  if (req.headers['x-no-compression']) {
-    return false
-  }
-  return compression.filter(req, res)
-}
+app.use(methodOverride('_method'))
+app.use(cookieParser())
+app.use(bodyParser.json());
 
 const corsOptions ={
   origin:true, 
@@ -64,8 +52,7 @@ const socketIo = require("socket.io")(server, {
 
 app.use('/',userRoute);
 app.use('/',productRoute);
-app.use('/',billRoute);
-app.use('/',detailBillRoute)
+
 
 // socketIo.on("connection", (socket) => {
 // console.log("New client connected" + socket.id);
@@ -164,37 +151,37 @@ app.get('/index.html', (req, res) => {
 //   }
 // })
 
-// app.put('/bill/transport/:id', (req, res) => {
-//   const accessToken=req.header('Authorization')
-//   if(!accessToken){
-//     res.send('Ban can phai dang nhap')
-//   }
-//   else{
-//     let verify=jwt.verify(accessToken,'mk')
-//     acount.find({_id:verify._id}).then((data)=>{
-//       const role=String(data[0].role)
-//       if(role==='admin'){
-//         bill.updateOne({_id:req.params.id},{$set:{statusOrder:1}})
-//         .then(() => {
-//           res.send('Access')
-//         })
-//         .catch()
-//       }
-//       else{
-//         res.send('Failture')
-//       }
-//     }).catch(()=>{
-//       res.send('Tai khoan hoac mat khau khong dung')
-//     })
-//   }
-// })
+app.put('/bill/transport/:id', (req, res) => {
+  const accessToken=req.header('Authorization')
+  if(!accessToken){
+    res.send('Ban can phai dang nhap')
+  }
+  else{
+    let verify=jwt.verify(accessToken,'mk')
+    acount.find({_id:verify._id}).then((data)=>{
+      const role=String(data[0].role)
+      if(role==='admin'){
+        bill.updateOne({_id:req.params.id},{$set:{statusOrder:1}})
+        .then(() => {
+          res.send('Access')
+        })
+        .catch()
+      }
+      else{
+        res.send('Failture')
+      }
+    }).catch(()=>{
+      res.send('Tai khoan hoac mat khau khong dung')
+    })
+  }
+})
 
-// app.put('/bill/receive/:id', (req, res) => {
-//   bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
-//   .then(() => {
-//     res.send('Access') 
-//   })
-// })
+app.put('/bill/receive/:id', (req, res) => {
+  bill.updateOne({_id:req.params.id},{$set:{statusOrder:2}})
+  .then(() => {
+    res.send('Access') 
+  })
+})
 
 // app.get('/filterProduct/:trademark/:design/:price',(req,res)=>{
 //   let a=''
@@ -371,209 +358,208 @@ app.get('/index.html', (req, res) => {
 //   }
 // })
 
-// app.get('/bill/:id_user', async(req, res) => {
-//   bill.find({id_user:req.params.id_user})
-//   .then(async(data)=>{
-//     res.json(data)
-//   })
-// })
+app.get('/bill/:id_user', async(req, res) => {
+  bill.find({id_user:req.params.id_user})
+  .then(async(data)=>{
+    res.json(data)
+  })
+})
 
-// app.post('/bill/create',(req,res)=>{
-//   const accessToken=req.header('Authorization')
-//   const transporter =  nodemailer.createTransport({
-//     host: 'smtp.gmail.com',
-//     port: 465,
-//     secure: true,
-//     auth: {
-//         user: process.env.EMAIL, 
-//         pass: process.env.APP_PASSWORD,
+app.get('/detailBill',async(req,res)=>{
+  detailBill.find({}).populate('id_product')
+  .then((data)=>{
+    res.send(data)
+  })
+})
 
-//     }
-//   });
-//   let style=`
-//     style="border: 1px solid #dddddd;padding: 8px;"
-//   `
-//   let head=`
-//     <table style="width: 100%;">
-//       <thead>
-//         <tr >
-//           <th ${style} scope="col">ID</th>
-//           <th ${style} scope="col">Image</th>
-//           <th ${style} scope="col">Name</th>
-//           <th ${style} scope="col">Amount</th>
-//         </tr>
-//       </thead>
-//       <tbody >
-//   `
+app.post('/bill/create',(req,res)=>{
+  const accessToken=req.header('Authorization')
+  const transporter =  nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL, 
+        pass: process.env.APP_PASSWORD,
+
+    }
+  });
+  let style=`
+    style="border: 1px solid #dddddd;padding: 8px;"
+  `
+  let head=`
+    <table style="width: 100%;">
+      <thead>
+        <tr >
+          <th ${style} scope="col">ID</th>
+          <th ${style} scope="col">Image</th>
+          <th ${style} scope="col">Name</th>
+          <th ${style} scope="col">Amount</th>
+        </tr>
+      </thead>
+      <tbody >
+  `
   
-//   let foot=`
-//       </tbody>
-//     </table>
-//   `
+  let foot=`
+      </tbody>
+    </table>
+  `
 
-//   const img=req.body.detailBill[0]
-//   const name=req.body.detailBill[1]
-//   const amount=req.body.detailBill[2]
+  const img=req.body.detailBill[0]
+  const name=req.body.detailBill[1]
+  const amount=req.body.detailBill[2]
 
-//   let content=req.body.detailBill[0].map((item,i)=>{
-//     return`
-//       <tr>
-//           <th ${style}>${i+1}</th>
-//           <td ${style}>
-//               <img style="width: 50px;height: 50px;" 
-//               src="${img[i]}"/>
-//           </td>
-//           <td ${style}>
-//             ${name[i]}
-//           </td>
-//           <td ${style}>
-//             ${amount[i]}
-//           </td>
-//       </tr>
-//       `;
+  let content=req.body.detailBill[0].map((item,i)=>{
+    return`
+      <tr>
+          <th ${style}>${i+1}</th>
+          <td ${style}>
+              <img style="width: 50px;height: 50px;" 
+              src="${img[i]}"/>
+          </td>
+          <td ${style}>
+            ${name[i]}
+          </td>
+          <td ${style}>
+            ${amount[i]}
+          </td>
+      </tr>
+      `;
 
-//   })
+  })
 
-//   const html=head+String(content.join(''))+foot;
-//   const mainOptions = { 
-//       from: 'NQH-Test nodemailer',
-//       to: req.body.email,
-//       subject: 'Danh sách đặt hàng từ Shopping',
-//       text: '',
-//       html: html
-//   }
+  const html=head+String(content.join(''))+foot;
+  const mainOptions = { 
+      from: 'NQH-Test nodemailer',
+      to: req.body.email,
+      subject: 'Danh sách đặt hàng từ Shopping',
+      text: '',
+      html: html
+  }
   
-//   console.log(req.body.email||'Not found')
+  console.log(req.body.email||'Not found')
   
-//   if(!accessToken){
-//     res.send('Ban can phai dang nhap')
-//   }
-//   else{
-//     let verify=jwt.verify(accessToken,'mk')
-//     acount.find({_id:verify._id}).then((data)=>{
-//       const bill=mongoose.model('bill',billSchema)
-//       const newBill= new bill(req.body.bill)
-//       newBill.save()
-//       .then((item) => { 
-//         res.send(item)
-//       })
-//       .then(()=>{
-//         transporter.sendMail(mainOptions, function(err, info){
-//           err?console.log(err):console.log(info)
-//         });
-//       })
-//     }).catch(()=>{
-//       res.send('Tai khoan hoac mat khau khong dung')
-//     })
-//   }
-// })
+  if(!accessToken){
+    res.send('Ban can phai dang nhap')
+  }
+  else{
+    let verify=jwt.verify(accessToken,'mk')
+    acount.find({_id:verify._id}).then((data)=>{
+      const bill=mongoose.model('bill',billSchema)
+      const newBill= new bill(req.body.bill)
+      newBill.save()
+      .then((item) => { 
+        res.send(item)
+      })
+      .then(()=>{
+        transporter.sendMail(mainOptions, function(err, info){
+          err?console.log(err):console.log(info)
+        });
+      })
+    }).catch(()=>{
+      res.send('Tai khoan hoac mat khau khong dung')
+    })
+  }
+})
 
 
-// app.use('/bill/delete/:id',(req,res)=>{
-//   const accessToken=req.header('Authorization')
-//   if(!accessToken){
-//     res.send('Ban can phai dang nhap')
-//   }
-//   else{
-//     let verify=jwt.verify(accessToken,'mk')
-//     acount.find({_id:verify._id}).then((data)=>{
-//       const role=String(data[0].role)
-//       if(role==='admin'){
-//         bill.deleteOne({_id:req.params.id}).then(()=>{
-//           detailBill.deleteMany({id_bill:req.params.id}).then(()=>{
-//             res.send("Xoa thanh cong")
-//           })
-//           .catch()
-//         })
-//         .catch()
-//       }
-//     }).catch(()=>{
-//       res.send('Tai khoan hoac mat khau khong dung')
-//     })
-//   }
-// })
+app.use('/bill/delete/:id',(req,res)=>{
+  const accessToken=req.header('Authorization')
+  if(!accessToken){
+    res.send('Ban can phai dang nhap')
+  }
+  else{
+    let verify=jwt.verify(accessToken,'mk')
+    acount.find({_id:verify._id}).then((data)=>{
+      const role=String(data[0].role)
+      if(role==='admin'){
+        bill.deleteOne({_id:req.params.id}).then(()=>{
+          detailBill.deleteMany({id_bill:req.params.id}).then(()=>{
+            res.send("Xoa thanh cong")
+          })
+          .catch()
+        })
+        .catch()
+      }
+    }).catch(()=>{
+      res.send('Tai khoan hoac mat khau khong dung')
+    })
+  }
+})
 
+app.post('/detailBill/create', (req, res) => {
+  const accessToken=req.header('Authorization')
+  if(!accessToken){
+    res.send('Ban can phai dang nhap')
+  }
+  else{
+    let verify=jwt.verify(accessToken,'mk')
+    acount.find({_id:verify._id}).then((data)=>{
+      detailBill.insertMany(req.body)
+      .then(()=>res.send('Access'))
+      .catch((err)=>res.send(err))
+    }).catch(()=>{
+      res.send('Tai khoan hoac mat khau khong dung')
+    })
+  }
 
-// app.get('/detailBill',async(req,res)=>{
-//   detailBill.find({}).populate('id_product')
-//   .then((data)=>{
-//     res.send(data)
-//   })
-// })
+})
 
-// app.post('/detailBill/create', (req, res) => {
-//   const accessToken=req.header('Authorization')
-//   if(!accessToken){
-//     res.send('Ban can phai dang nhap')
-//   }
-//   else{
-//     let verify=jwt.verify(accessToken,'mk')
-//     acount.find({_id:verify._id}).then((data)=>{
-//       detailBill.insertMany(req.body)
-//       .then(()=>res.send('Access'))
-//       .catch((err)=>res.send(err))
-//     }).catch(()=>{
-//       res.send('Tai khoan hoac mat khau khong dung')
-//     })
-//   }
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './public');
+	},
+	filename: function (req, file, cb) {
+		console.log(file);
+		cb(null,  file.originalname);
+	},
+});
+const upload = multer({ storage: storage }).single('myfile');
 
-// })
+app.post('/upload',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			res.send(err);
+		} else {
+      res.send('Success, Image uploaded!');
+		}
+    console.log(req.file.filename);
+	});
+})
 
-// const storage = multer.diskStorage({
-// 	destination: function (req, file, cb) {
-// 		cb(null, './public');
-// 	},
-// 	filename: function (req, file, cb) {
-// 		console.log(file);
-// 		cb(null,  file.originalname);
-// 	},
-// });
-// const upload = multer({ storage: storage }).single('myfile');
+app.get('/img/:address',(req,res)=>{
+  res.sendFile(path.join(__dirname+'/public/'+req.params.address));
 
-// app.post('/upload',(req,res,next)=>{
-//   upload(req, res, function (err) {
-// 		if (err) {
-// 			res.send(err);
-// 		} else {
-//       res.send('Success, Image uploaded!');
-// 		}
-//     console.log(req.file.filename);
-// 	});
-// })
+})
 
-// app.get('/img/:address',(req,res)=>{
-//   res.sendFile(path.join(__dirname+'/public/'+req.params.address));
+app.use('/delete/img/:address',(req,res)=>{
+  const filename=req.params.address;
+  const directory='/shoppingbe/public/';
+  fs.unlink(directory+filename,(err)=>{
+      if (err) {
+      res.status(500).send({
+        message: "Could not delete the file. " + err,
+      });
+    }
 
-// })
+    res.status(200).send({
+      message: "File is deleted.",
+    });
+  })
+})
 
-// app.use('/delete/img/:address',(req,res)=>{
-//   const filename=req.params.address;
-//   const directory='/shoppingbe/public/';
-//   fs.unlink(directory+filename,(err)=>{
-//       if (err) {
-//       res.status(500).send({
-//         message: "Could not delete the file. " + err,
-//       });
-//     }
+app.post('/img/update',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('thanh cong');
+      // console.log(req.file.filename);
+      res.send('Success, Image uploaded!');
+		}
+	})
 
-//     res.status(200).send({
-//       message: "File is deleted.",
-//     });
-//   })
-// })
-
-// app.post('/img/update',(req,res,next)=>{
-//   upload(req, res, function (err) {
-// 		if (err) {
-// 			console.log(err);
-// 		} else {
-// 			console.log('thanh cong');
-//       // console.log(req.file.filename);
-//       res.send('Success, Image uploaded!');
-// 		}
-// 	})
-
-// })
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
