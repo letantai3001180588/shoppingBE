@@ -11,9 +11,9 @@ router.delete('/acount/delete/:id',deleteAcount)
 router.put('/acount/update/:id',updateAcount)
 
 // router.post('/upload',uploadAvatar)
-router.get('/img/:address',getAvatar)
-router.get('/delete/img/:address',deleteAvatar)
-router.post('/img/update',uploadAvatar)
+// router.get('/img/:address',getAvatar)
+// router.get('/delete/img/:address',deleteAvatar)
+// router.post('/img/update',uploadAvatar)
 
 
 module.exports=router;

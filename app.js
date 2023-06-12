@@ -519,61 +519,61 @@ app.get('/index.html', (req, res) => {
 
 // })
 
-// const storage = multer.diskStorage({
-// 	destination: function (req, file, cb) {
-// 		cb(null, './public');
-// 	},
-// 	filename: function (req, file, cb) {
-// 		console.log(file);
-// 		cb(null,  file.originalname);
-// 	},
-// });
-// const upload = multer({ storage: storage }).single('myfile');
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './public');
+	},
+	filename: function (req, file, cb) {
+		console.log(file);
+		cb(null,  file.originalname);
+	},
+});
+const upload = multer({ storage: storage }).single('myfile');
 
-// app.post('/upload',(req,res,next)=>{
-//   upload(req, res, function (err) {
-// 		if (err) {
-// 			res.send(err);
-// 		} else {
-//       res.send('Success, Image uploaded!');
-// 		}
-//     console.log(req.file.filename);
-// 	});
-// })
+app.post('/upload',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			res.send(err);
+		} else {
+      res.send('Success, Image uploaded!');
+		}
+    console.log(req.file.filename);
+	});
+})
 
-// app.get('/img/:address',(req,res)=>{
-//   res.sendFile(path.join(__dirname+'/public/'+req.params.address));
+app.get('/img/:address',(req,res)=>{
+  res.sendFile(path.join(__dirname+'/public/'+req.params.address));
 
-// })
+})
 
-// app.use('/delete/img/:address',(req,res)=>{
-//   const filename=req.params.address;
-//   const directory='/shoppingbe/public/';
-//   fs.unlink(directory+filename,(err)=>{
-//       if (err) {
-//       res.status(500).send({
-//         message: "Could not delete the file. " + err,
-//       });
-//     }
+app.use('/delete/img/:address',(req,res)=>{
+  const filename=req.params.address;
+  const directory='/shoppingbe/public/';
+  fs.unlink(directory+filename,(err)=>{
+      if (err) {
+      res.status(500).send({
+        message: "Could not delete the file. " + err,
+      });
+    }
 
-//     res.status(200).send({
-//       message: "File is deleted.",
-//     });
-//   })
-// })
+    res.status(200).send({
+      message: "File is deleted.",
+    });
+  })
+})
 
-// app.post('/img/update',(req,res,next)=>{
-//   upload(req, res, function (err) {
-// 		if (err) {
-// 			console.log(err);
-// 		} else {
-// 			console.log('thanh cong');
-//       // console.log(req.file.filename);
-//       res.send('Success, Image uploaded!');
-// 		}
-// 	})
+app.post('/img/update',(req,res,next)=>{
+  upload(req, res, function (err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('thanh cong');
+      // console.log(req.file.filename);
+      res.send('Success, Image uploaded!');
+		}
+	})
 
-// })
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
